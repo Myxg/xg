@@ -1,7 +1,14 @@
 import hashlib
 import datetime
+import re
 import time
 import calendar
+import xlrd
+from dateutil.relativedelta import relativedelta
+from datetime import timedelta
+from docx import Document
+from pandas.core.dtypes.inference import is_number
+
 from django.shortcuts import render
 import requests
 import pymysql
@@ -18,14 +25,59 @@ from .models import *
 
 
 def index(request):
-    db = pymysql.connect('localhost', 'root', '000000', 'v')
+    db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
     cursor = db.cursor()
     name_sql = "select * from form_ShiPin_Report ORDER BY ID DESC limit 8"
     cursor.execute(name_sql)
     result = cursor.fetchall()
     db.commit()
     db.close()
-    data = {'data':[]}
+
+    data = {'data': []}
+    nvdan = []
+    nandan = []
+    nvshuang = []
+    nanshuang = []
+    hunshuang = []
+    db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
+    cursor = db.cursor()
+    name_sql = "select * from player_list"
+    cursor.execute(name_sql)
+    results = cursor.fetchall()
+    db.commit()
+    db.close()
+    for i in results:
+        j = list(i)
+        if j[2] == '女单':
+            nvdan.append(j)
+        elif j[2] == '男单':
+            nandan.append(j)
+        elif j[2] == '女双':
+            nvshuang.append(j)
+        elif j[2] == '男双':
+            nanshuang.append(j)
+        elif j[2] == '混双':
+            hunshuang.append(j)
+    data['player1'] = nvdan[:3] + nandan[:3]
+    data['player2'] = nvshuang[:2] + nanshuang[:2] + hunshuang[:2]
+
+    matchs = []
+    db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
+    cursor = db.cursor()
+    name_sql = "select * from match_list order by match_date DESC"
+    cursor.execute(name_sql)
+    results = cursor.fetchall()
+    db.commit()
+    db.close()
+    for i in results:
+        j = list(i)
+        matchs.append(j)
+
+    match1 = matchs[:6]
+    match2 = matchs[6:12]
+    data['match1'] = match1
+    data['match2'] = match2
+
     for i in result:
         d1 = {
             'name': '-'.join(i[7].split('-')[3:]),
@@ -63,6 +115,7 @@ def project_video(request):
     match = request.GET.get('match')
     year = request.GET.get('year')
     project = request.GET.get('project')
+    print(match, year, project)
     results = ShiPin.objects.filter(Q(single_line_shipinmingcheng__icontains=match))
     for i in results:
         n = i.single_line_shipinmingcheng.split('-')
@@ -474,6 +527,10 @@ def playercn_info(request):
         wgqy.append({'name': ds, 'max': 100})
         shenglv.append(sl)
 
+    if len(wgqy) == 0:
+        wgqy.append({'name': '-', 'max': 100})
+        shenglv.append('0')
+
     res_shipin = FormShipinReport.objects.filter(single_line_shipinmingcheng__contains=player)
     shipin_list = []
     for i in res_shipin:
@@ -520,8 +577,8 @@ def login(request):
     if request.method == 'POST':
         name = request.POST.get('user')
         pwd = request.POST.get('pwd')
-        # result = User.objects.filter(username=name)[0]
-        if '111' == pwd:
+        result = User.objects.filter(username=name)[0]
+        if result.password == pwd:
             data = {'data': name}
         else:
             data = {'data': ''}
@@ -540,7 +597,628 @@ def login(request):
         return response
 
 
+def player_list(request):
+    data = {}
+    nvdan = []
+    nandan = []
+    nvshuang = []
+    nanshuang = []
+    hunshuang = []
+    db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
+    cursor = db.cursor()
+    name_sql = "select * from player_list"
+    cursor.execute(name_sql)
+    results = cursor.fetchall()
+    db.commit()
+    db.close()
+    for i in results:
+        j = list(i)
+        if j[2] == '女单':
+            nvdan.append(j)
+        elif j[2] == '男单':
+            nandan.append(j)
+        elif j[2] == '女双':
+            nvshuang.append(j)
+        elif j[2] == '男双':
+            nanshuang.append(j)
+        elif j[2] == '混双':
+            hunshuang.append(j)
+    data['nvdan'] = nvdan
+    data['nandan'] = nandan
+    data['nvshuang'] = nvshuang
+    data['nanshuang'] = nanshuang
+    data['hunshuang'] = hunshuang
+    response = HttpResponse(json.dumps(data))
+    return response
 
 
+def playercn_list(request):
+    data = {}
+    nvdan = []
+    nandan = []
+    nvshuang = []
+    nanshuang = []
+    hunshuang = []
+    db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
+    cursor = db.cursor()
+    name_sql = "select * from playercn_list"
+    cursor.execute(name_sql)
+    results = cursor.fetchall()
+    db.commit()
+    db.close()
+    for i in results:
+        j = list(i)
+        if j[2] == '女单':
+            nvdan.append(j)
+        elif j[2] == '男单':
+            nandan.append(j)
+        elif j[2] == '女双':
+            nvshuang.append(j)
+        elif j[2] == '男双':
+            nanshuang.append(j)
+        elif j[2] == '混双':
+            hunshuang.append(j)
+    data['nvdan'] = nvdan
+    data['nandan'] = nandan
+    data['nvshuang'] = nvshuang
+    data['nanshuang'] = nanshuang
+    data['hunshuang'] = hunshuang
+    response = HttpResponse(json.dumps(data))
+    return response
+
+
+def match_list(request):
+    data = {}
+    matchs = []
+    db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
+    cursor = db.cursor()
+    name_sql = "select * from match_list order by match_date DESC"
+    cursor.execute(name_sql)
+    results = cursor.fetchall()
+    db.commit()
+    db.close()
+    for i in results:
+        j = list(i)
+        matchs.append(j)
+    data['match_list'] = matchs
+    response = HttpResponse(json.dumps(data))
+    return response
+
+
+def playercn_video(request):
+    matchname = request.GET.get('matchname')
+    videoname = request.GET.get('videoname')
+    data = {}
+    result = FormShipinReport.objects.filter(Q(query_saishimingcheng=matchname) & Q(single_line_shipinmingcheng__contains=videoname))[0]
+    data['videourl'] = result.url
+    response = HttpResponse(json.dumps(data))
+    return response
+
+
+def upload(request):
+    if request.method == 'POST':
+        data = {}
+        data["msg"] = '上传成功！'
+        a = request.FILES.get('file')
+        username = request.POST.get('username')
+        fileclass = request.POST.get('fileclass')
+        uploaddate = time.strftime("%Y-%m-%d", time.localtime())
+        route = '/upload_files/' +a.name
+        destination = open(route, 'wb+')
+        for chunk in a.chunks():
+            destination.write(chunk)
+        destination.close()
+        # if fileclass == '训练量':
+        #     if route.split('.')[-1] == 'xlsx' or route.split('.')[-1] == 'xls':
+        #         xll_data = xlrd.open_workbook(route)
+        #         table = xll_data.sheet_by_index(0)
+        #         rowNum = table.nrows
+        #         colNum = table.ncols
+        #         l1 = []
+        #         for i in range(0, rowNum):
+        #             l2 = []
+        #             for j in range(colNum):
+        #                 value = table.cell_value(i, j)
+        #                 l2.append(value)
+        #             l1.append(l2)
+        #         t = l1[1][0].split('——')[0].replace(' ', '')
+        #         t1 = re.findall(r'\d+', t)
+        #         t = t1[0] + '-' + t1[1].zfill(2) + '-' + t1[2].zfill(2)
+        #         dates = []
+        #         tt = 0
+        #         begin = t
+        #         dt = datetime.datetime.strptime(begin, "%Y-%m-%d")
+        #         date = begin[:]
+        #         while tt < 7:
+        #             dates.append(date)
+        #             dt = dt + timedelta(1)
+        #             date = dt.strftime("%Y-%m-%d")
+        #             tt += 1
+        #         date_all = []
+        #         for date in dates:
+        #             t1 = date.split('-')
+        #             date = [str(int(t1[2])), '-', calendar.month_abbr[int(t1[1])], '-', t1[0]]
+        #             date = ''.join(date)
+        #             date_all.append(date)
+        #         ll = []
+        #         xm = ['技术（技战术）', '技术（小技术）', '体能（力量）', '体能（专项）']
+        #         for i in l1[4:]:
+        #             for j in date_all:
+        #                 m = date_all.index(j) * 4
+        #                 for n in range(1, 5):
+        #                     x = n + m
+        #                     if isinstance(i[x], float):
+        #                         d1 = ['', i[0].replace(' ', ''), j, xm[n - 1], int(i[x])]
+        #                         ll.append(d1)
+        #         for i in ll:
+        #             try:
+        #                 body = {
+        #                     'form_YunDongYuan': i[1],
+        #                     'Number_XunLianShiChang': i[4],
+        #                     'Date_field_XunLianRiQi': i[2],
+        #                     'Dropdown_XunLianKeMu': i[3],
+        #                 }
+        #                 u1 = 'https://creator.zoho.com.cn/api/chunzhou.jia2/json/xunlian/form/form_XunLianLiang/record/add/'
+        #                 params = {
+        #                     'authtoken': 'd51ecfa14f98e8f14c91ac894bf8e7d4',
+        #                     'scope': 'creatorapi',
+        #                     'raw': "true",
+        #                 }
+        #                 req = requests.post(u1, params={**params, **body})
+        #                 req_json = req.json()
+        #             except Exception as e:
+        #                 pass
+        #
+        #     else:
+        #         data["msg"] = '文件格式错误，请修改为xlsx或xls格式。'
+        # elif fileclass == '训练计划':
+        #     if route.split('.')[-1] == 'docx':
+        #         data_all = []
+        #         docStr = Document(route)
+        #         paragraph = docStr.paragraphs[2]
+        #         parStr = paragraph.text
+        #         l = parStr.split(' ')
+        #         ll = []
+        #         for i in l:
+        #             if i not in ll:
+        #                 ll.append(i)
+        #         y1 = re.findall(r'\d+', ll[0])
+        #         t = y1[0] + '-' + y1[1].zfill(2) + '-' + y1[2].zfill(2)
+        #         dates = []
+        #         tt = 0
+        #         begin = t
+        #         dt = datetime.datetime.strptime(begin, "%Y-%m-%d")
+        #         date = begin[:]
+        #         while tt < 7:
+        #             dates.append(date)
+        #             dt = dt + timedelta(1)
+        #             date = dt.strftime("%Y-%m-%d")
+        #             tt += 1
+        #         date_all = []
+        #         for date in dates:
+        #             t1 = date.split('-')
+        #             date = [str(int(t1[2])), '-', calendar.month_abbr[int(t1[1])], '-', t1[0]]
+        #             date = ''.join(date)
+        #             date_all.append(date)
+        #         zhubie = ll[4].split('：')[1][:2] + '一队'
+        #         zhujiaolian = ll[6]
+        #         jiaolianzu = [ll[8], ll[9], ll[10]]
+        #         numTables = docStr.tables
+        #         table = numTables[1]
+        #         z1 = [table.cell(2, 1).text.split('\n'), table.cell(3, 1).text.split('\n'),
+        #               table.cell(4, 1).text.split('\n')]
+        #         z2 = [table.cell(2, 2).text.split('\n'), table.cell(3, 2).text.split('\n'),
+        #               table.cell(4, 2).text.split('\n')]
+        #         z3 = [table.cell(2, 3).text.split('\n'), table.cell(3, 3).text.split('\n'),
+        #               table.cell(4, 3).text.split('\n')]
+        #         z4 = [table.cell(2, 4).text.split('\n'), table.cell(3, 4).text.split('\n'),
+        #               table.cell(4, 4).text.split('\n')]
+        #         z5 = [table.cell(2, 5).text.split('\n'), table.cell(3, 5).text.split('\n'),
+        #               table.cell(4, 5).text.split('\n')]
+        #         z6 = [table.cell(2, 6).text.split('\n'), table.cell(3, 6).text.split('\n'),
+        #               table.cell(4, 6).text.split('\n')]
+        #         z7 = [table.cell(2, 7).text.split('\n'), table.cell(3, 7).text.split('\n'),
+        #               table.cell(4, 7).text.split('\n')]
+        #         zz = [z1, z2, z3, z4, z5, z6, z7]
+        #         for i in range(7):
+        #             xunlianriqi = date_all[i]
+        #             zjl = zhujiaolian
+        #             jlz = jiaolianzu
+        #             dd = zz[i]
+        #             for j in dd:
+        #                 j = [x for x in j if x != '']
+        #                 j = [x for x in j if x != ' ']
+        #                 if len(j) > 2:
+        #                     start_time = j[1]
+        #                     start_time = start_time.replace('：', ':')
+        #                     jj = j[2:]
+        #                     for kc in jj:
+        #                         tn = start_time.split(':')
+        #                         hour = jj.index(kc)
+        #                         s_time = str(int(tn[0]) + hour) + ':' + tn[1] + ':00'
+        #                         e_time = str(int(tn[0]) + hour + 1) + ':' + tn[1] + ':00'
+        #                         data_one = [xunlianriqi, s_time, e_time, zjl, jlz, zhubie, '未开始', kc]
+        #                         data_all.append(data_one)
+        #         for i in data_all[0:1]:
+        #             l1 = i
+        #             try:
+        #                 body = {
+        #                     'Date_field_XunLianRi': l1[0],
+        #                     'Time_KaiShi': l1[1],
+        #                     'Time_JieShu': l1[2],
+        #                     'form_ZhiYuan_ZhuJiaoLian': l1[3],
+        #                     'form_ZhiYuan_JiaoLianZu': l1[4],
+        #                     'form_ZuZhiJiaGou': l1[5],
+        #                     'Dropdown_BianGeng': l1[6],
+        #                     'form_KeCheng': l1[7],
+        #                 }
+        #
+        #                 u1 = 'https://creator.zoho.com.cn/api/chunzhou.jia2/json/xunlian/form/form_XunLianJiHua/record/add/'
+        #                 params = {
+        #                     'authtoken': 'd51ecfa14f98e8f14c91ac894bf8e7d4',
+        #                     'scope': 'creatorapi',
+        #                     'raw': "true",
+        #                 }
+        #                 req = requests.post(u1, params={**params, **body})
+        #                 req_json = req.json()
+        #             except Exception as e:
+        #                 pass
+        #     else:
+        #         data["msg"] = '文件格式错误，请修改为docx格式。'
+        # elif fileclass == '周计划':
+        #     if route.split('.')[-1] == 'docx':
+        #         try:
+        #             docStr = Document(route)
+        #             paragraph = docStr.paragraphs[2]
+        #             parStr = paragraph.text
+        #             l = parStr.split(' ')
+        #             ll = []
+        #             for i in l:
+        #                 if i not in ll:
+        #                     ll.append(i)
+        #             y1 = re.findall(r'\d+', ll[0])
+        #             y2 = re.findall(r'\d+', ll[1])
+        #             start = y1[2] + '-' + calendar.month_abbr[int(y1[1])] + '-' + y1[0]
+        #             end = y2[2] + '-' + calendar.month_abbr[int(y2[1])] + '-' + y2[0]
+        #             zhubie = ll[4].split('：')[1][:2] + '一队'
+        #             zhujiaolian = ll[6]
+        #             jiaolianzu = [ll[8].split('：')[1], ll[9], ll[10]]
+        #             numTables = docStr.tables
+        #             zdsx = numTables[0].cell(0, 0).text.split('：')[1].replace('\n', '')
+        #             table = numTables[1]
+        #             ydls = [table.cell(6, 4).text, table.cell(7, 4).text, table.cell(8, 4).text]
+        #             qds = [table.cell(6, 5).text, table.cell(7, 5).text, table.cell(8, 5).text]
+        #             ydl = ''
+        #             qd = ''
+        #             for i in ydls:
+        #                 i = i.replace(' ', '')
+        #                 if i[-1] == '*':
+        #                     ydl = i[:2]
+        #             for i in qds:
+        #                 i = i.replace(' ', '')
+        #                 if i[-1] == '*':
+        #                     qd = i[:4]
+        #             yqmd = table.cell(6, 1).text.split('：')[1].replace('\n', '')
+        #             cishu = table.cell(6, 7).text.split('：')[-1]
+        #             l1 = [start, end, zhubie, zhujiaolian, jiaolianzu, zdsx, yqmd, cishu, ydl, qd]
+        #
+        #             body = {
+        #                 'Date_field_KaiShi': l1[0],
+        #                 'Date_field_JieShu': l1[1],
+        #                 'form_ZuZhiJiaGou': l1[2],
+        #                 'form_ZhiYuan_ZhuJiaoLian': l1[3],
+        #                 'form_ZhiYuan_JiaoLianZu': l1[4],
+        #                 'Single_Line_ZhiDaoSiXiang': l1[5],
+        #                 'Single_Line_YaoQiuJiMuDi': l1[6],
+        #                 'Number_CiShu': l1[7],
+        #                 'Dropdown_YunDongLiang': l1[8],
+        #                 'Dropdown_QiangDu': l1[9],
+        #             }
+        #             u1 = 'https://creator.zoho.com.cn/api/chunzhou.jia2/json/xunlian/form/form_ZhouJiHua/record/add/'
+        #             params = {
+        #                 'authtoken': 'd51ecfa14f98e8f14c91ac894bf8e7d4',
+        #                 'scope': 'creatorapi',
+        #                 'raw': "true",
+        #             }
+        #             req = requests.post(u1, params={**params, **body})
+        #         except Exception as e:
+        #             data["msg"] = '上传失败，内容错误。'
+        #     else:
+        #
+        #         data["msg"] = '文件格式错误，请修改为docx格式。'
+        # elif fileclass == '基础体能':
+        #     if route.split('.')[-1] == 'xlsx' or route.split('.')[-1] == 'xls':
+        #         try:
+        #             file = route
+        #             xlrd_data = xlrd.open_workbook(file)
+        #             table = xlrd_data.sheet_by_index(0)
+        #
+        #             rowNum = table.nrows
+        #             colNum = table.ncols
+        #
+        #             projects = ['form_BMI', 'form_ZuoWeiTiQianQu', 'form_30M', 'form_ChuiZhiZongTiao', 'form_ShenDun_MAX',
+        #                         'form_WoTui_MAX',
+        #                         'form_YinTiXiangShang', 'form_FuJiNaiLi', 'form_BeiJiNaiLi', 'form_3000M']
+        #             l1 = []
+        #             for i in range(0, rowNum):
+        #                 l2 = []
+        #                 for j in range(colNum):
+        #                     value = table.cell_value(i, j)
+        #                     l2.append(value)
+        #                 l1.append(l2)
+        #             t = file.split('\\')[-1].split('-')[-1].split('.')[0]
+        #             date = ''.join([str(int(t[6:8])), '-', calendar.month_abbr[int(t[4:6])], '-', t[:4]])
+        #             n = 6
+        #             d1 = {
+        #                 'form_BMI': [],
+        #                 'form_ZuoWeiTiQianQu': [],
+        #                 'form_30M': [],
+        #                 'form_ChuiZhiZongTiao': [],
+        #                 'form_ShenDun_MAX': [],
+        #                 'form_WoTui_MAX': [],
+        #                 'form_YinTiXiangShang': [],
+        #                 'form_FuJiNaiLi': [],
+        #                 'form_BeiJiNaiLi': [],
+        #                 'form_3000M': []
+        #             }
+        #             while n < len(l1):
+        #                 bmi_pinfen = l1[n + 1][3]
+        #                 form_ZuoWeiTiQianQu = l1[n][4]
+        #                 form_ZuoWeiTiQianQu_pinfen = l1[n + 1][4]
+        #                 form_30M = l1[n][5]
+        #                 form_30M_pinfen = l1[n + 1][5]
+        #                 form_ChuiZhiZongTiao = l1[n][6]
+        #                 form_ChuiZhiZongTiao_pinfen = l1[n + 1][6]
+        #                 form_ShenDun_MAX = l1[n][7]
+        #                 form_ShenDun_MAX_pinfen = l1[n + 1][7]
+        #                 form_WoTui_MAX = l1[n][8]
+        #                 form_WoTui_MAX_pinfen = l1[n + 1][8]
+        #                 form_YinTiXiangShang = l1[n][9]
+        #                 form_YinTiXiangShang_pinfen = l1[n + 1][9]
+        #                 form_FuJiNaiLi = l1[n][10]
+        #                 form_FuJiNaiLi_pinfen = l1[n + 1][10]
+        #                 form_BeiJiNaiLi = l1[n][11]
+        #                 form_BeiJiNaiLi_pinfen = l1[n + 1][11]
+        #                 form_3000M = l1[n][12]
+        #                 form_3000M_pinfen = l1[n + 1][12]
+        #                 if is_number(bmi_pinfen) == False:
+        #                     bmi_pinfen = '0'
+        #                 if is_number(form_ZuoWeiTiQianQu) == False:
+        #                     form_ZuoWeiTiQianQu = '0'
+        #                 if is_number(form_ZuoWeiTiQianQu_pinfen) == False:
+        #                     form_ZuoWeiTiQianQu_pinfen = '0'
+        #                 if is_number(form_30M) == False:
+        #                     form_30M = '0'
+        #                 if is_number(form_30M_pinfen) == False:
+        #                     form_30M_pinfen = '0'
+        #                 if is_number(form_ChuiZhiZongTiao) == False:
+        #                     form_ChuiZhiZongTiao = '0'
+        #                 if is_number(form_ChuiZhiZongTiao_pinfen) == False:
+        #                     form_ChuiZhiZongTiao_pinfen = '0'
+        #                 if is_number(form_ShenDun_MAX) == False:
+        #                     form_ShenDun_MAX = '0'
+        #                 if is_number(form_ShenDun_MAX_pinfen) == False:
+        #                     form_ShenDun_MAX_pinfen = '0'
+        #                 if is_number(form_WoTui_MAX) == False:
+        #                     form_WoTui_MAX = '0'
+        #                 if is_number(form_WoTui_MAX_pinfen) == False:
+        #                     form_WoTui_MAX_pinfen = '0'
+        #                 if is_number(form_YinTiXiangShang) == False:
+        #                     form_YinTiXiangShang = '0'
+        #                 if is_number(form_YinTiXiangShang_pinfen) == False:
+        #                     form_YinTiXiangShang_pinfen = '0'
+        #                 if is_number(form_FuJiNaiLi) == False:
+        #                     form_FuJiNaiLi = '0'
+        #                 if is_number(form_FuJiNaiLi_pinfen) == False:
+        #                     form_FuJiNaiLi_pinfen = '0'
+        #                 if is_number(form_BeiJiNaiLi) == False:
+        #                     form_BeiJiNaiLi = '0'
+        #                 if is_number(form_BeiJiNaiLi_pinfen) == False:
+        #                     form_BeiJiNaiLi_pinfen = '0'
+        #                 if is_number(form_3000M) == False:
+        #                     form_3000M = '0'
+        #                 if is_number(form_3000M_pinfen) == False:
+        #                     form_3000M_pinfen = '0'
+        #                 bmi_pinfen = int(bmi_pinfen)
+        #                 form_ZuoWeiTiQianQu = form_ZuoWeiTiQianQu
+        #                 form_ZuoWeiTiQianQu_pinfen = int(form_ZuoWeiTiQianQu_pinfen)
+        #                 form_30M = form_30M
+        #                 form_30M_pinfen = int(form_30M_pinfen)
+        #                 form_ChuiZhiZongTiao = form_ChuiZhiZongTiao
+        #                 form_ChuiZhiZongTiao_pinfen = int(form_ChuiZhiZongTiao_pinfen)
+        #                 form_ShenDun_MAX = int(form_ShenDun_MAX)
+        #                 form_ShenDun_MAX_pinfen = int(form_ShenDun_MAX_pinfen)
+        #                 form_WoTui_MAX = form_WoTui_MAX
+        #                 form_WoTui_MAX_pinfen = int(form_WoTui_MAX_pinfen)
+        #                 form_YinTiXiangShang = int(form_YinTiXiangShang)
+        #                 form_YinTiXiangShang_pinfen = int(form_YinTiXiangShang_pinfen)
+        #                 form_FuJiNaiLi = form_FuJiNaiLi
+        #                 form_FuJiNaiLi_pinfen = int(form_FuJiNaiLi_pinfen)
+        #                 form_BeiJiNaiLi = form_BeiJiNaiLi
+        #                 form_BeiJiNaiLi_pinfen = int(form_BeiJiNaiLi_pinfen)
+        #                 form_3000M = form_3000M
+        #                 form_3000M_pinfen = int(form_3000M_pinfen)
+        #                 d_bmi = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShiRiQi': date, 'Number_PingFen': bmi_pinfen}
+        #                 d_ZuoWeiTiQianQu = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                     'Decimal_CeShiJieGuo': form_ZuoWeiTiQianQu,
+        #                                     'Dropdown_PingFen': form_ZuoWeiTiQianQu_pinfen}
+        #                 d_30M = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date, 'Decimal_CeShiJieGuo': form_30M,
+        #                          'Dropdown_PingFen': form_30M_pinfen}
+        #                 d_ChuiZhiZongTiao = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                      'Decimal_CeShiJieGuo': form_ChuiZhiZongTiao,
+        #                                      'Dropdown_PingFen': form_ChuiZhiZongTiao_pinfen}
+        #                 d_ShenDun_MAX = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                  'Number_CeShiJieGuo': form_ShenDun_MAX,
+        #                                  'Dropdown_PingFen': form_ShenDun_MAX_pinfen}
+        #                 d_WoTui_MAX = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                'Decimal_CeShiJieGuo': form_WoTui_MAX, 'Dropdown_PingFen': form_WoTui_MAX_pinfen}
+        #                 d_YinTiXiangShang = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                      'Number_CeShiJieGuo': form_YinTiXiangShang,
+        #                                      'Dropdown_PingFen': form_YinTiXiangShang_pinfen}
+        #                 d_FuJiNaiLi = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                'Decimal_CeShiJieGuo': form_FuJiNaiLi, 'Dropdown_PingFen': form_FuJiNaiLi_pinfen}
+        #                 d_BeiJiNaiLi = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                                 'Decimal_CeShiJieGuo': form_BeiJiNaiLi, 'Dropdown_PingFen': form_BeiJiNaiLi_pinfen}
+        #                 d_3000M = {'form_YunDongYuan': l1[n][0], 'Date_field_CeShi': date,
+        #                            'Decimal_CeShiJieGuo': form_3000M, 'Dropdown_PingFen': form_3000M_pinfen}
+        #                 d1['form_BMI'].append(d_bmi)
+        #                 d1['form_ZuoWeiTiQianQu'].append(d_ZuoWeiTiQianQu)
+        #                 d1['form_30M'].append(d_30M)
+        #                 d1['form_ChuiZhiZongTiao'].append(d_ChuiZhiZongTiao)
+        #                 d1['form_ShenDun_MAX'].append(d_ShenDun_MAX)
+        #                 d1['form_WoTui_MAX'].append(d_WoTui_MAX)
+        #                 d1['form_YinTiXiangShang'].append(d_YinTiXiangShang)
+        #                 d1['form_FuJiNaiLi'].append(d_FuJiNaiLi)
+        #                 d1['form_BeiJiNaiLi'].append(d_BeiJiNaiLi)
+        #                 d1['form_3000M'].append(d_3000M)
+        #                 n += 2
+        #             for i in projects:
+        #                 vals = d1[i]
+        #                 for j in vals:
+        #                     try:
+        #                         body = j
+        #                         u1 = 'https://creator.zoho.com.cn/api/chunzhou.jia2/json/tineng/form/' + i + '/record/add/'
+        #                         params = {
+        #                             'authtoken': 'd51ecfa14f98e8f14c91ac894bf8e7d4',
+        #                             'scope': 'creatorapi',
+        #                             'raw': "true",
+        #                         }
+        #                         req = requests.post(u1, params={**params, **body})
+        #                         req_json = req.json()
+        #                     except Exception as e:
+        #                         pass
+        #         except Exception as e:
+        #             data['msg'] = '上传失败，数据错误！'
+        #
+        #     else:
+        #         data["msg"] = '文件格式错误，请修改为xlsx或xls格式。'
+        # elif fileclass == '专项体能':
+        #     pass
+        # elif fileclass == '生理生化':
+        #     if route.split('.')[-1] == 'xlsx' or route.split('.')[-1] == 'xls':
+        #         try:
+        #             data_slsh = xlrd.open_workbook(route)
+        #             table = data_slsh.sheet_by_index(0)
+        #             rowNum = table.nrows
+        #             colNum = table.ncols
+        #             l1 = []
+        #             for i in range(0, rowNum):
+        #                 l2 = []
+        #                 for j in range(colNum):
+        #                     value = table.cell_value(i, j)
+        #                     l2.append(value)
+        #                 l1.append(l2)
+        #             n = 1
+        #             data_all = []
+        #             while n < len(l1):
+        #                 t = l1[n][0].split('.')
+        #                 y = t[0]
+        #                 m = t[1]
+        #                 d = t[2]
+        #                 date = ''.join([d, '-', calendar.month_abbr[int(m)], '-', y])
+        #                 hxb = l1[n][3]
+        #                 bxb = l1[n][4]
+        #                 xqyj = l1[n][5]
+        #                 xhdb = l1[n][6]
+        #                 jsjm = l1[n][7]
+        #                 gt = l1[n][8]
+        #                 xns = l1[n][9]
+        #                 pzc = l1[n][10]
+        #                 if is_number(hxb) == False:
+        #                     hxb = '0'
+        #                 if is_number(bxb) == False:
+        #                     bxb = '0'
+        #                 if is_number(xqyj) == False:
+        #                     xqyj = '0'
+        #                 if is_number(xhdb) == False:
+        #                     xhdb = '0'
+        #                 if is_number(jsjm) == False:
+        #                     jsjm = '0'
+        #                 if is_number(gt) == False:
+        #                     gt = '0'
+        #                 if is_number(xns) == False:
+        #                     xns = '0'
+        #                 if is_number(pzc) == False:
+        #                     pzc = '0'
+        #
+        #                 d_hxb = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '红细胞',
+        #                          'Decimal_CeShiJieGuo': hxb}
+        #                 d_bxb = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '白细胞',
+        #                          'Decimal_CeShiJieGuo': bxb}
+        #                 d_xqyj = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '血球压积',
+        #                           'Decimal_CeShiJieGuo': xqyj}
+        #                 d_xhdb = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '血红蛋白',
+        #                           'Decimal_CeShiJieGuo': xhdb}
+        #                 d_jsjm = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '肌酸激酶',
+        #                           'Decimal_CeShiJieGuo': jsjm}
+        #                 d_gt = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '睾酮',
+        #                         'Decimal_CeShiJieGuo': gt}
+        #                 d_xns = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '血尿素',
+        #                          'Decimal_CeShiJieGuo': xns}
+        #                 d_pzc = {'form_YunDongYuan': l1[n][1], 'Date_field_CeShiRiQi': date, 'Dropdown_CeShiXiangMu': '皮质醇',
+        #                          'Decimal_CeShiJieGuo': pzc}
+        #                 data_all.append(d_hxb)
+        #                 data_all.append(d_bxb)
+        #                 data_all.append(d_xqyj)
+        #                 data_all.append(d_xhdb)
+        #                 data_all.append(d_jsjm)
+        #                 data_all.append(d_gt)
+        #                 data_all.append(d_xns)
+        #                 data_all.append(d_pzc)
+        #                 n += 1
+        #
+        #             for j in data_all:
+        #                 try:
+        #                     body = j
+        #                     u1 = 'https://creator.zoho.com.cn/api/chunzhou.jia2/json/myapplication/form/form_ShengLiShengHua/record/add/'
+        #                     params = {
+        #                         'authtoken': 'd51ecfa14f98e8f14c91ac894bf8e7d4',
+        #                         'scope': 'creatorapi',
+        #                         'raw': "true",
+        #                     }
+        #                     req = requests.post(u1, params={**params, **body})
+        #                     req_json = req.json()
+        #                 except Exception as e:
+        #                     pass
+        #         except Exception as e:
+        #             data['msg'] = '上传失败，数据错误！'
+        #     else:
+        #         data["msg"] = '文件格式错误，请修改为xlsx或xls格式。'
+        if fileclass == 'FMS':
+            pass
+        elif fileclass == '训练量':
+            pass
+        elif fileclass == '训练计划':
+            pass
+        elif fileclass == '周计划':
+            pass
+        elif fileclass == '基础体能':
+            pass
+        elif fileclass == '专项体能':
+            pass
+        elif fileclass == '生理生化':
+            pass
+
+        if data['msg'] == '上传成功！':
+            up_data = file_list()
+            up_data.file_name = a.name
+            up_data.file_class = fileclass
+            up_data.upload_user = username
+            up_data.upload_DATE = uploaddate
+            up_data.status = '处理完成!'
+            up_data.save()
+
+        response = HttpResponse(json.dumps(data))
+        return response
+    if request.method == 'GET':
+        data = {'files': []}
+        start = datetime.date.today() - relativedelta(months=3)
+        results = file_list.objects.filter(upload_DATE__gte=start)
+        for i in results:
+            date = str(i.upload_DATE.year) + '-' + str(i.upload_DATE.month) + '-' + str(i.upload_DATE.day)
+            dd = [i.file_name, i.file_class, i.upload_user, date, i.status]
+            data['files'].append(dd)
+        response = HttpResponse(json.dumps(data))
+        return response
 
 
