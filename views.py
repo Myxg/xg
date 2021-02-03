@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from docx import Document
 # from pandas.core.dtypes.inference import is_number
+from collections import Counter
 
 from django.shortcuts import render
 import requests
@@ -115,7 +116,6 @@ def project_video(request):
     match = request.GET.get('match')
     year = request.GET.get('year')
     project = request.GET.get('project')
-    print(match, year, project)
     results = ShiPin.objects.filter(Q(single_line_shipinmingcheng__icontains=match))
     for i in results:
         n = i.single_line_shipinmingcheng.split('-')
@@ -533,15 +533,25 @@ def playercn_info(request):
 
     res_shipin = FormShipinReport.objects.filter(single_line_shipinmingcheng__contains=player)
     shipin_list = []
+    shipin_lista = []
     for i in res_shipin:
-        spmc = '-'.join(i.single_line_shipinmingcheng.split('-')[6:])
+        spmc = i.single_line_shipinmingcheng
         ss = i.query_saishimingcheng
         lunci = i.dropdown_lunci
         zbf = i.dropdown_bisaijieguo
         mjbf = i.single_line_bifen
         shipin = [spmc, ss, lunci, zbf, mjbf]
+        shipin_lista.append(shipin)
+    shipin_lista.sort(key=lambda x: x[0], reverse=True)
+    for i in shipin_lista:
+        spmc = '-'.join(i[0].split('-')[6:])
+        ss = i[1]
+        lunci = i[2]
+        zbf = i[3]
+        mjbf = i[4]
+        shipin = [spmc, ss, lunci, zbf, mjbf]
         shipin_list.append(shipin)
-
+    # shipin.sort(keys=lambda x: x[])
     data['xinxi'] = xinxi
     data['jctn_time'] = jc_times
     data['jctn'] = pinfen_jctn
@@ -562,15 +572,66 @@ def playercn_info(request):
 
 
 def search(request):
-    if request.method == 'POST':
-        a = request.POST.get('data')
-        data = {'data': 1}
-        response = HttpResponse(json.dumps(data))
-        # response["Access-Control-Allow-Origin"] = "*"
-        # response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
-        # response["Access-Control-Max-Age"] = "1000"
-        # response["Access-Control-Allow-Headers"] = " * "
-        return response
+    data = {'data': []}
+    content = request.GET.get('content').split(" ")
+    ln = []
+    listcon = []
+    list1 = []
+    list2 = []
+    for i in content:
+        # print(i)
+        if i.encode('UTF-8').isalpha() == True:
+            ln.append(i)
+        else:
+            listcon.append(i)
+    a = ''.join(ln)
+    if len(a) != 0:
+        db = pymysql.connect('video.hbang.com.cn', 'video', 'P@ssw0rd235', 'video')
+        cursor = db.cursor()
+        name_sql = "select Single_Line_ZhongWenMing from form_YunDongYuan_Report where Single_Line_YingWenMing='" + a + "'"
+        cursor.execute(name_sql)
+        result = cursor.fetchone()
+        db.commit()
+        db.close()
+        for i in result:
+            listcon.append(i)
+    for i in listcon:
+        # print(i)
+        match = ShiPin.objects.filter(Q(single_line_shipinmingcheng__icontains=i))
+        for h in match:
+            list1.append(h)
+    if len(listcon) == 1:
+        for i in list1:
+            if i not in list2:
+                list2.append(i)
+    elif len(listcon) == 2:
+        l1 = dict(Counter(list1))
+        list2 = [key for key, value in l1.items() if 3 > value > 1]
+        # print(l1)
+        # print(list2)
+    elif len(listcon) == 3:
+        l1 = dict(Counter(list1))
+        list2 = [key for key, value in l1.items() if 4 > value > 2]
+    elif len(listcon) == 4:
+        l1 = dict(Counter(list1))
+        list2 = [key for key, value in l1.items() if 5 > value > 3]
+    elif len(listcon) == 5:
+        l1 = dict(Counter(list1))
+        list2 = [key for key, value in l1.items() if 6 > value > 4]
+    for i in list2:
+        # n = i.single_line_shipinmingcheng.split('-')
+        dd = {
+            'name': '-'.join(i.single_line_shipinmingcheng.split('-')[3:]),
+            'url': i.url
+        }
+        data['data'].append(dd)
+
+    response = HttpResponse(json.dumps(data))
+    # response["Access-Control-Allow-Origin"] = "*"
+    # response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    # response["Access-Control-Max-Age"] = "1000"
+    # response["Access-Control-Allow-Headers"] = " * "
+    return response
 
 
 def login(request):
@@ -690,7 +751,29 @@ def playercn_video(request):
     videoname = request.GET.get('videoname')
     data = {}
     result = FormShipinReport.objects.filter(Q(query_saishimingcheng=matchname) & Q(single_line_shipinmingcheng__contains=videoname))[0]
+    videoid = result.videoid
+    db = pymysql.connect('cba-db.hbang.com.cn', 'admin', 'Passw0rd235', 'cba')
+    cursor = db.cursor()
+    sql = "select * from finish where videoid='" + videoid + "'"
+    cursor.execute(sql)
+    result1 = cursor.fetchall()
+    db.commit()
+    db.close()
     data['videourl'] = result.url
+    if len(result1) > 0:
+        score_zip_url = result1[0][2]
+        win_lost_zip_url = result1[0][3]
+        start_zip_url = result1[0][3]
+        end_zip_url = result1[0][3]
+        data['score_zip_url'] = score_zip_url
+        data['win_lost_zip_url'] = win_lost_zip_url
+        data['start_zip_url'] = start_zip_url
+        data['end_zip_url'] = end_zip_url
+    else:
+        data['score_zip_url'] = ''
+        data['win_lost_zip_url'] = ''
+        data['start_zip_url'] = ''
+        data['end_zip_url'] = ''
     response = HttpResponse(json.dumps(data))
     return response
 
@@ -716,6 +799,7 @@ def upload(request):
     if request.method == 'POST':
         data = {}
         data["msg"] = '上传成功！'
+        file_status = '处理完成'
         a = request.FILES.get('file')
         username = request.POST.get('username')
         fileclass = request.POST.get('fileclass')
@@ -767,6 +851,11 @@ def upload(request):
                             if isinstance(i[x], float):
                                 d1 = ['', i[0].replace(' ', ''), j, xm[n - 1], int(i[x])]
                                 ll.append(d1)
+                            elif i[x] == '':
+                                i[x] = '0'
+                                d1 = ['', i[0].replace(' ', ''), j, xm[n - 1], int(i[x])]
+                                ll.append(d1)
+
                 for i in ll:
                     try:
                         body = {
@@ -783,6 +872,10 @@ def upload(request):
                         }
                         req = requests.post(u1, params={**params, **body})
                         req_json = req.json()
+                        print(req_json['formname'][1]['operation'][1]['status'])
+                        if req_json['formname'][1]['operation'][1]['status'] != 'Success':
+
+                            file_status = '内容有错误'
                     except Exception as e:
                         pass
             else:
@@ -962,8 +1055,8 @@ def upload(request):
                             value = table.cell_value(i, j)
                             l2.append(value)
                         l1.append(l2)
-                    t = file.split('\\')[-1].split('-')[-1].split('.')[0]
-                    date = ''.join([str(int(t[6:8])), '-', calendar.month_abbr[int(t[4:6])], '-', t[:4]])
+                    t = datetime.datetime.now()
+                    date = ''.join([str(t.day), '-', calendar.month_abbr[int(t.month)], '-', str(t.year)])
                     n = 6
                     d1 = {
                         'form_BMI': [],
@@ -1202,14 +1295,14 @@ def upload(request):
                 data["msg"] = '文件格式错误，请修改为xlsx或xls格式。'
         elif fileclass == 'FMS':
             pass
-
+        # aws_upload = 'aws s3 cp ' + route + ' s3://yumaoqiu-my/' + video_id + '/images/ --recursive'
         if data['msg'] == '上传成功！':
             up_data = file_list()
             up_data.file_name = a.name
             up_data.file_class = fileclass
             up_data.upload_user = username
             up_data.upload_DATE = uploaddate
-            up_data.status = '处理完成!'
+            up_data.status = file_status
             up_data.save()
 
         response = HttpResponse(json.dumps(data))
@@ -1222,7 +1315,19 @@ def upload(request):
             date = str(i.upload_DATE.year) + '-' + str(i.upload_DATE.month) + '-' + str(i.upload_DATE.day)
             dd = [i.file_name, i.file_class, i.upload_user, date, i.status]
             data['files'].append(dd)
+        data['files'].reverse()
         response = HttpResponse(json.dumps(data))
         return response
 
+
+def update(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        new_pwd = request.POST.get('pass')
+        dd = video_user.objects.get(username=username)
+        dd.password = new_pwd
+        dd.save()
+        data = {'data': '修改成功！'}
+        response = HttpResponse(json.dumps(data))
+        return response
 

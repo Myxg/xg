@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="OrcasThemes">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <title>视频播放</title>
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link rel="stylesheet" href="css/screen.css">
+    <link rel="stylesheet" href="css/animation.css">
+    <!--[if IE 7]>
+
+<![endif]-->
+    <link rel="stylesheet" href="css/font-awesome.css">
+    <!--[if lt IE 8]>
+<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen, projection">
+<![endif]-->
+    <link href="css/lity.css" rel="stylesheet">
+    <style>
+        #channels-block {
+            padding: 50px 0;
+        }
+        
+        button {
+            width: 69px;
+            height: 36px;
+            margin-left: 1px;
+            border: none;
+            color: #000;
+            /* padding: 15px 32px; */
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 20px;
+            border-radius: 10px;
+            background-color: #4280e6;
+        }
+        
+        button:hover {
+            background-color: #4280e6;
+            color: #fff;
+        }
+        /* video {
+            width: 100%;
+            height: 200px;
+        } */
+        /* #home-main article {
+            height: 300px;
+        }
+         */
+        
+        #home1 {
+            height: 100%;
+        }
+        
+        .plays1 {
+            height: 80%;
+        }
+        
+        .plays2 {
+            height: 96%;
+        }
+        
+        .plays3 {
+            height: 96%;
+        }
+        
+        h2 {
+            position: absolute;
+        }
+        
+        #iframe_video {
+            margin-top: 80px;
+            margin-left: 150px;
+            width: 60%;
+            height: 95%;
+            float: left;
+        }
+        
+        .outbox a {
+            color: #4280e6;
+        }
+        
+        .outbox a:hover {
+            color: #fff;
+        }
+        
+        .outbox {
+            margin-left: 100px;
+            margin-top: 100px;
+            height: 600px;
+            width: 20%;
+            overflow-y: auto;
+            /* border: 5px solid black; */
+            border-radius: 10px;
+            float: left;
+        }
+        
+        .outbox table {
+            width: 100%;
+            text-align: center;
+            font-size: 30px;
+        }
+        
+        .outbox td {
+            width: 20%;
+            height: 95px;
+            border-top: 2px solid black;
+            border-left: 2px solid black;
+            border-right: 2px solid black;
+            border-bottom: 2px solid black;
+        }
+        
+        iframe {
+            border: 2px solid black;
+            width: 100%;
+            height: 100%;
+        }
+        
+        @media (min-width: 1200px) {
+            #zxsp {
+                margin-left: 35px;
+            }
+            .col-lg-10 {
+                width: 99.333333%;
+            }
+            .col-lg-9 {
+                width: 99%;
+            }
+            .col-sm-12 {
+                position: relative;
+                min-height: 1px;
+                padding-right: 30px;
+                padding-left: 60px;
+            }
+        }
+        
+        @media (max-width: 667px) {
+            #home1 {
+                width: 100%;
+                height: auto;
+                min-height: 100%;
+            }
+            .plays1 {
+                margin: 20px auto;
+                width: 100%;
+                height: 300px;
+            }
+            .plays2 {
+                width: 100%;
+                height: 90%;
+            }
+            .plays3 {
+                width: 100%;
+                height: 90%;
+            }
+            #iframe_video {
+                margin: 10px auto;
+                width: 100%;
+                height: 90%;
+            }
+            iframe {
+                width: 100%;
+                height: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div id="home1" class="container-fluid standard-bg">
+        <div class="row header-top">
+            <div class="col-lg-3 col-md-6 col-sm-5 col-xs-8">
+                <!-- <a class="main-logo" href="#"><img src="img/main-logo.png" class="main-logo img-responsive" alt="Muvee Reviews" title="Muvee Reviews"></a> -->
+                <a class="main-logo" href="#" style="font: 2em sans-serif;">中国羽毛球队</a>
+            </div>
+        </div>
+        <div class="row home-mega-menu ">
+            <div class="col-md-12">
+                <nav class="navbar navbar-default">
+                    <div class="navbar-header">
+                        <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".js-navbar-collapse">
+			 <span class="sr-only">Toggle navigation</span>
+			 <span class="icon-bar"></span>
+			 <span class="icon-bar"></span>
+			 <span class="icon-bar"></span>
+			 </button>
+                    </div>
+                    <div class="collapse navbar-collapse js-navbar-collapse megabg dropshd ">
+                        <ul class="nav navbar-nav" id="daohangli">
+
+                        </ul>
+                        <div class="search-block">
+                            <input id="content" type="search" placeholder="全英 女单" value="" />
+                            <button onclick="search()"><a>搜索</a></button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <!-- CORE -->
+        <div class="row plays1">
+
+            <div class="col-lg-10 col-md-8 plays2">
+                <section id="home-main" class="plays3">
+                    <h2 class="icon"><i class="fa fa-television" aria-hidden="true"></i>视频播放</h2>
+                    <div id="iframe_video">
+
+                    </div>
+                    <div class="outbox">
+                        <table id="sp_list">
+
+                        </table>
+                    </div>
+
+                </section>
+            </div>
+
+        </div>
+        <!-- 
+        <div id="footer" class="container-fluid footer-background">
+            <div class="container">
+                <footer>
+                    <div class="row">
+
+                    </div>
+
+            </div>
+
+            </footer>
+        </div> -->
+    </div>
+    <!-- JAVA SCRIPT -->
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery-1.12.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/lity.js"></script>
+    <script>
+        // url = window.location.search.split('?')[1];
+        // var canshu = decodeURI(url, 'utf-8');
+        // var myp = canshu.split('&');
+
+
+        // if (myp.length == 4) {
+        //     match = myp[1].split('=')[1]
+        //     year = myp[2].split('=')[1]
+        //     project = myp[3].split('=')[1]
+        // } else {
+        //     match = myp[0].split('=')[1]
+        //     year = myp[1].split('=')[1]
+        //     project = myp[2].split('=')[1]
+        // }
+
+        $(document).ready(function() {
+            var dh = ''
+            url = window.location.search.split('?')[1];
+            var u1 = decodeURI(url, 'utf-8');
+            if (u1 != null && u1.length != 0) {
+                u2 = u1.split('=')[0]
+                username = u1.split('=')[1].split('&')[0]
+                matchname = u1.split('=')[3]
+                videoname = u1.split('=')[2].split('&')[0]
+
+                if (u2 != null && u2.length != 0 && u2 == 'username') {
+                    dh += '<li><a href="index.html?username=' + username + '">首页</a></li><li><a href="player.html?username=' + username + '">球员</a></li><li><a href="match.html?username=' + username + '">赛事</a></li><li><a href="playercn.html?username=' + username + '">中国球员</a></li><li><a href="upload.html?username=' + username + '">文件上传</a></li>'
+                } else {
+                    dh += '<li><a href="index.html">首页</a></li><li><a href="player.html">球员</a></li><li><a href="match.html">赛事</a></li>'
+                }
+            } else {
+                dh += '<li><a href="index.html">首页</a></li><li><a href="player.html">球员</a></li><li><a href="match.html">赛事</a></li>'
+            }
+            $('#daohangli').html(dh);
+            var iframeStr = '';
+            var zipstr = '';
+            $.ajax({
+                url: 'http://127.0.0.1:8001/playercn_video/',
+                dataType: "JSON",
+                type: "GET",
+                async: "false",
+                data: {
+                    'matchname': matchname,
+                    'videoname': videoname
+                },
+                success: function(data) {
+                    var result = data['videourl'];
+                    var score_zip_url = data['score_zip_url'];
+                    var win_lost_zip_url = data['win_lost_zip_url'];
+                    var start_zip_url = data['start_zip_url'];
+                    var end_zip_url = data['end_zip_url'];
+
+                    if (result != null && result.length != 0) {
+                        // for (var i = 0; i < result.length; i++) {
+                        //     var n = result[i]
+                        //     console.log(n['name'])
+                        //     console.log(n['url'])
+                        iframeStr += '<iframe allowfullscreen="true" src="' + result + '"></iframe>'
+
+
+                        // }
+                        $('#iframe_video').html(iframeStr); //用拼接的str设置id=wtype的模块的内容
+
+
+
+                    }
+                    if (score_zip_url != null && score_zip_url.length != 0) {
+                        zipstr += '<tr><td><a href="' + end_zip_url + '">每分视频</a></td></tr>';
+                    }
+                    if (win_lost_zip_url != null && win_lost_zip_url.length != 0) {
+                        zipstr += '<tr><td><a href="' + win_lost_zip_url + '">得失分视频</a></td></tr>';
+                    }
+                    if (start_zip_url != null && start_zip_url.length != 0) {
+                        zipstr += '<tr><td><a href="' + start_zip_url + '">前四拍视频</a></td></tr>';
+                    }
+                    if (end_zip_url != null && end_zip_url.length != 0) {
+                        zipstr += '<tr><td><a href="' + end_zip_url + '">后四拍视频</a></td></tr>';
+                    }
+                    $('#sp_list').html(zipstr); //用拼接的str设置id=wtype的模块的内容
+                }
+            });
+        })
+    </script>
+    <script>
+        $(".nav .dropdown").hover(function() {
+            $(this).find(".dropdown-toggle").dropdown("toggle");
+        });
+    </script>
+    <script type="text/javascript">
+        function search() {
+            u1 = window.location.search.split('?')[1];
+            var content = document.getElementById("content").value
+            if (content != null && content.length != 0) {
+                if (u1 != null && u1.length != 0) {
+                    u2 = u1.split('=')[0]
+                    username = u1.split('=')[1]
+                    console.log(username)
+                    if (u2 != null && u2.length != 0 && u2 == 'username') {
+                        location = "search_video.html?username=" + username + '&content=' + content;
+                    } else {
+                        location = "search_video.html?content=" + content;
+                    }
+                } else {
+                    location = "search_video.html?content=" + content;
+                }
+            } else {
+                location = '#';
+            }
+        }
+    </script>
+
+</body>
+
+</html>
