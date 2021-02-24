@@ -93,7 +93,7 @@
         .outbox {
             margin-left: 100px;
             margin-top: 100px;
-            height: 600px;
+            height: 220px;
             width: 20%;
             overflow-y: auto;
             /* border: 5px solid black; */
@@ -104,12 +104,38 @@
         .outbox table {
             width: 100%;
             text-align: center;
-            font-size: 30px;
+            font-size: 26px;
         }
         
         .outbox td {
             width: 20%;
-            height: 95px;
+            height: 50px;
+            border-top: 2px solid black;
+            border-left: 2px solid black;
+            border-right: 2px solid black;
+            border-bottom: 2px solid black;
+        }
+        
+        .win_lost {
+            margin-left: 10px;
+            margin-top: 10px;
+            height: 400px;
+            width: 30%;
+            overflow-y: auto;
+            /* border: 5px solid black; */
+            border-radius: 10px;
+            float: left;
+        }
+        
+        .win_lost table {
+            width: 100%;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .win_lost td {
+            width: 12%;
+            height: 100px;
             border-top: 2px solid black;
             border-left: 2px solid black;
             border-right: 2px solid black;
@@ -218,12 +244,19 @@
                         <table id="sp_list">
 
                         </table>
+
+                    </div>
+                    <div class="win_lost">
+                        <table id="wl_list">
+
+                        </table>
                     </div>
 
                 </section>
             </div>
 
         </div>
+
         <!-- 
         <div id="footer" class="container-fluid footer-background">
             <div class="container">
@@ -279,6 +312,7 @@
             $('#daohangli').html(dh);
             var iframeStr = '';
             var zipstr = '';
+            var winloststr = '';
             $.ajax({
                 url: 'http://127.0.0.1:8001/playercn_video/',
                 dataType: "JSON",
@@ -294,6 +328,8 @@
                     var win_lost_zip_url = data['win_lost_zip_url'];
                     var start_zip_url = data['start_zip_url'];
                     var end_zip_url = data['end_zip_url'];
+                    var wl_a = data['wl_a'];
+                    var wl_b = data['wl_b'];
 
                     if (result != null && result.length != 0) {
                         // for (var i = 0; i < result.length; i++) {
@@ -321,7 +357,13 @@
                     if (end_zip_url != null && end_zip_url.length != 0) {
                         zipstr += '<tr><td><a href="' + end_zip_url + '">后四拍视频</a></td></tr>';
                     }
+                    if (wl_a != null && wl_a.length != 0) {
+                        winloststr += '<tr><td></td><td>后场直接得分</td><td>网前直接得分</td><td>发球直接得分</td><td>其他直接得分</td><td>对方网前失误</td><td>对方主动失误</td><td>对方被动失误</td></tr>' +
+                            '<tr><td>' + wl_a[0] + '</td><td>' + wl_a[1] + '</td><td>' + wl_a[2] + '</td><td>' + wl_a[3] + '</td><td>' + wl_a[4] + '</td><td>' + wl_a[5] + '</td><td>' + wl_a[6] + '</td><td>' + wl_a[7] + '</td></tr>' +
+                            '<tr><td>' + wl_b[0] + '</td><td>' + wl_b[1] + '</td><td>' + wl_b[2] + '</td><td>' + wl_b[3] + '</td><td>' + wl_b[4] + '</td><td>' + wl_b[5] + '</td><td>' + wl_b[6] + '</td><td>' + wl_b[7] + '</td></tr>';
+                    }
                     $('#sp_list').html(zipstr); //用拼接的str设置id=wtype的模块的内容
+                    $('#wl_list').html(winloststr); //用拼接的str设置id=wtype的模块的内容
                 }
             });
         })

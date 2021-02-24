@@ -9,7 +9,7 @@ from datetime import timedelta
 from docx import Document
 # from pandas.core.dtypes.inference import is_number
 from collections import Counter
-
+import os
 from django.shortcuts import render
 import requests
 import pymysql
@@ -750,8 +750,17 @@ def playercn_video(request):
     matchname = request.GET.get('matchname')
     videoname = request.GET.get('videoname')
     data = {}
+    nl = videoname.split('-')
+    if len(nl) == 3:
+        name_a = nl[0]
+        name_b = nl[2]
+    elif len(nl) == 5:
+        name_a = '-'.join([nl[0], nl[1]])
+        name_b = '-'.join([nl[3], nl[4]])
     result = FormShipinReport.objects.filter(Q(query_saishimingcheng=matchname) & Q(single_line_shipinmingcheng__contains=videoname))[0]
     videoid = result.videoid
+    if videoid == None:
+        videoid = ''
     db = pymysql.connect('cba-db.hbang.com.cn', 'admin', 'Passw0rd235', 'cba')
     cursor = db.cursor()
     sql = "select * from finish where videoid='" + videoid + "'"
@@ -759,21 +768,85 @@ def playercn_video(request):
     result1 = cursor.fetchall()
     db.commit()
     db.close()
+    db = pymysql.connect('cba-db.hbang.com.cn', 'admin', 'Passw0rd235', 'cba')
+    cursor = db.cursor()
+    sql_score = "select * from video_score where videoid='" + videoid + "'"
+    cursor.execute(sql_score)
+    result_score = cursor.fetchall()
+    db.commit()
+    db.close()
+    a_h_d = 0
+    a_w_d = 0
+    a_f_d = 0
+    a_q_d = 0
+    a_w_s = 0
+    a_z_s = 0
+    a_b_s = 0
+    b_h_d = 0
+    b_w_d = 0
+    b_f_d = 0
+    b_q_d = 0
+    b_w_s = 0
+    b_z_s = 0
+    b_b_s = 0
+
+    for i in result_score:
+        if i[8] == name_a:
+            if i[9] == '后场直接得分':
+                a_h_d += 1
+            elif i[9] == '网前直接得分':
+                a_w_d += 1
+            elif i[9] == '发球直接得分':
+                a_f_d += 1
+            elif i[9] == '其他直接得分':
+                a_q_d += 1
+            elif i[9] == '对方网前失误':
+                a_w_s += 1
+            elif i[9] == '对方主动失误':
+                a_z_s += 1
+            elif i[9] == '对方被动失误':
+                a_b_s += 1
+        elif i[8] in name_b:
+            if i[9] == '后场直接得分':
+                b_h_d += 1
+            elif i[9] == '网前直接得分':
+                b_w_d += 1
+            elif i[9] == '发球直接得分':
+                b_f_d += 1
+            elif i[9] == '其他直接得分':
+                b_q_d += 1
+            elif i[9] == '对方网前失误':
+                b_w_s += 1
+            elif i[9] == '对方主动失误':
+                b_z_s += 1
+            elif i[9] == '对方被动失误':
+                b_b_s += 1
+    wl_a = [name_a, a_h_d, a_w_d, a_f_d, a_q_d, a_w_s, a_z_s, a_b_s]
+    wl_b = [name_b, b_h_d, b_w_d, b_f_d, b_q_d, b_w_s, b_z_s, b_b_s]
+
     data['videourl'] = result.url
     if len(result1) > 0:
         score_zip_url = result1[0][2]
         win_lost_zip_url = result1[0][3]
-        start_zip_url = result1[0][3]
-        end_zip_url = result1[0][3]
+        start_zip_url = result1[0][4]
+        end_zip_url = result1[0][5]
         data['score_zip_url'] = score_zip_url
         data['win_lost_zip_url'] = win_lost_zip_url
         data['start_zip_url'] = start_zip_url
         data['end_zip_url'] = end_zip_url
+
     else:
         data['score_zip_url'] = ''
         data['win_lost_zip_url'] = ''
         data['start_zip_url'] = ''
         data['end_zip_url'] = ''
+
+    if len(result_score) > 0:
+        data['wl_a'] = wl_a
+        data['wl_b'] = wl_b
+    else:
+        data['wl_a'] = ''
+        data['wl_b'] = ''
     response = HttpResponse(json.dumps(data))
     return response
 
@@ -804,7 +877,8 @@ def upload(request):
         username = request.POST.get('username')
         fileclass = request.POST.get('fileclass')
         uploaddate = time.strftime("%Y-%m-%d", time.localtime())
-        route = 'D:\\9\\index\\' +a.name
+        # route = 'D:\\9\\index\\' + a.name
+        route = '/upload_files/' + a.name
         destination = open(route, 'wb+')
         for chunk in a.chunks():
             destination.write(chunk)
@@ -855,7 +929,6 @@ def upload(request):
                                 i[x] = '0'
                                 d1 = ['', i[0].replace(' ', ''), j, xm[n - 1], int(i[x])]
                                 ll.append(d1)
-
                 for i in ll:
                     try:
                         body = {
@@ -872,9 +945,8 @@ def upload(request):
                         }
                         req = requests.post(u1, params={**params, **body})
                         req_json = req.json()
-                        print(req_json['formname'][1]['operation'][1]['status'])
+                        # print(req_json)
                         if req_json['formname'][1]['operation'][1]['status'] != 'Success':
-
                             file_status = '内容有错误'
                     except Exception as e:
                         pass
@@ -1295,7 +1367,8 @@ def upload(request):
                 data["msg"] = '文件格式错误，请修改为xlsx或xls格式。'
         elif fileclass == 'FMS':
             pass
-        # aws_upload = 'aws s3 cp ' + route + ' s3://yumaoqiu-my/' + video_id + '/images/ --recursive'
+        aws_upload = 'aws s3 cp ' + route + ' s3://video.hbang.com.cn/upload_files/' + a.name
+        os.system(aws_upload)
         if data['msg'] == '上传成功！':
             up_data = file_list()
             up_data.file_name = a.name
